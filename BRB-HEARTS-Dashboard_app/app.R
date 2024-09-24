@@ -9,6 +9,7 @@
 
 # Install shinydashboard
 #install.packages("shinydashboard")
+#install.packages("NHSplotthedots")
 
 # load packages
 library(shinydashboard)
@@ -16,6 +17,7 @@ library(shiny)
 library(ggplot2)
 library(purrr)
 library(dplyr)
+library(NHSRplotthedots)
 
 # define user interface
 ui <- dashboardPage(
@@ -50,32 +52,23 @@ ui <- dashboardPage(
       tabItem(tabName = "overview",
               fluidRow(
                 box(
-                  title = "Revenue [Book]", width = 4,
-                  plotOutput(outputId = "p1-revenue-book")
+                  title = "Controlled Hypertension Rates", width = 8,
+                  plotOutput(outputId = "graph_1_overall_htn_rates")
                 ),
                 box(
-                  title = "Revenue [Check-In]", width = 4,
-                  plotOutput(outputId = "p2-revenue-checkin")
+                  title = "Polyclinic Hypertension Control Rates", width = 8,
+                  plotOutput(outputId = "graph_2_polyclinic_htn_rates")
                 ),
                 box(
-                  title = "RevPAR", width = 4,
-                  plotOutput(outputId = "p3-revpar")
+                  title = "Summary Systolic Blood Pressure", width = 4,
+                  tableOutput(outputId = "table_1_sum_sysbp")
+                ),
+                box(
+                  title = "Summary Diastolic Blood Pressure", width = 4,
+                  tableOutput(outputId = "table_1_sum_diabp")
                 )
               ),
-              fluidRow(
-                box(
-                  title = "Revenue [Channel]", width = 4,
-                  plotOutput(outputId = "p4-revenue-channel")
-                ),
-                box(
-                  title = "Occupancy [unit]", width = 4,
-                  plotOutput(outputId = "p5-occupancy")
-                ),
-                box(
-                  title = "Book vs Cancel [Unit]", width = 4,
-                  plotOutput(outputId = "p6-book-vs-cancel")
-                )
-              )
+              
       ),
       
       tabItem(tabName = "history",
