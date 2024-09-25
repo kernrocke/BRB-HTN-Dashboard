@@ -9,7 +9,9 @@
 # task:                 Create outputs for HEARTS Dashboard
 
 # Set working directory
-dir <- "/Users/kernrocke/Library/Mobile Documents/com~apple~CloudDocs/Github/BRB-HTN-Dashboard"
+#dir <- "/Users/kernrocke/Library/Mobile Documents/com~apple~CloudDocs/Github/BRB-HTN-Dashboard"
+dir <- "/home/kernrocke/Documents/Github/BRB-HTN-Dashboard"
+
 data_name <- "BRB_Hearts_Dashboard_Data.csv"
 
 # Load libraries
