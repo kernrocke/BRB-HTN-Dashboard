@@ -7,6 +7,10 @@
 #    http://shiny.rstudio.com/
 #
 
+#Preparation
+install.packages("devtools")
+devtools::install_github("rstudio/gridlayout")
+
 library(shiny)
 library(plotly)
 library(gridlayout)
