@@ -136,3 +136,10 @@ summary_stats <- bind_rows(summary_sbp, summary_dbp)
 
 #Remove excess data frames
 rm(controlled_sbp,uncontrolled_sbp,ISO_SBP_sbp,ISO_DBP_sbp,controlled_dbp,uncontrolled_dbp,ISO_SBP_dbp,ISO_DBP_dbp,summary_sbp,summary_dbp)
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+# Create data frame for estimates for prevalence of HEARTS indicators
+
