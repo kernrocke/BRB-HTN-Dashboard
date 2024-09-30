@@ -5,12 +5,12 @@
 # project:              Barbados HEARTS Dashboard
 # analyst:              Kern ROCKE
 # date create:          24 Sept 24
-# date modified:        24 Sept 24
+# date modified:        29 Sept 24
 # task:                 Create outputs for HEARTS Dashboard
 
 # Set working directory
-#dir <- "/Users/kernrocke/Library/Mobile Documents/com~apple~CloudDocs/Github/BRB-HTN-Dashboard"
-dir <- "/home/kernrocke/Documents/Github/BRB-HTN-Dashboard"
+dir <- "/Users/kernrocke/Library/Mobile Documents/com~apple~CloudDocs/Github/BRB-HTN-Dashboard"
+#dir <- "/home/kernrocke/Documents/Github/BRB-HTN-Dashboard"
 
 data_name <- "BRB_Hearts_Dashboard_Data.csv"
 
@@ -19,7 +19,7 @@ data_name <- "BRB_Hearts_Dashboard_Data.csv"
 
 # Load libraries
 #List of libaries needed
-libs <- c("dplyr")
+libs <- c("dplyr", "ggplot2", "janitor")
 
 #Install missing libraries
 installed_libs <- libs %in% rownames(installed.packages())
@@ -34,6 +34,9 @@ invisible(lapply(libs, library, character.only = T))
 data <- read.csv(paste0(dir,"/Data/",data_name))
 
 ### DATA CLEANING
+
+#Remove empty rows of dtaa
+data <- data[!is.na(data$encounter_id), ]
 
 # Remove NULL from systolic and diastolic values
 data$most_recent_systoic <- as.numeric(as.character(data$most_recent_systoic))
@@ -77,6 +80,19 @@ data$HTN_control[data$most_recent_systoic<140 & data$most_recent_diasystoic<90]=
 # Extract year and month
 data$year <- format(as.Date(data$last_visited_date, format="%m/%d/%Y"),"%Y")
 data$month <- format(as.Date(data$last_visited_date, format="%m/%d/%Y"),"%m")
+
+data$month[data$month=="01" ]="Jan"
+data$month[data$month=="02" ]="Feb"
+data$month[data$month=="03" ]="Mar"
+data$month[data$month=="04" ]="Apr"
+data$month[data$month=="05" ]="May"
+data$month[data$month=="06" ]="Jun"
+data$month[data$month=="07" ]="Jul"
+data$month[data$month=="08" ]="Aug"
+data$month[data$month=="09" ]="Sep"
+data$month[data$month=="10" ]="Oct"
+data$month[data$month=="11" ]="Nov"
+data$month[data$month=="12" ]="Dec"
 
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -137,9 +153,54 @@ summary_stats <- bind_rows(summary_sbp, summary_dbp)
 #Remove excess data frames
 rm(controlled_sbp,uncontrolled_sbp,ISO_SBP_sbp,ISO_DBP_sbp,controlled_dbp,uncontrolled_dbp,ISO_SBP_dbp,ISO_DBP_dbp,summary_sbp,summary_dbp)
 
+
+# Create data frames with 2023 and 2024 data
+
+data$HTN_control[data$HTN_control=="1" ]="Conrol"
+data$HTN_control[data$HTN_control=="0" ]="Unconrolled"
+
+data_2023 <- data[data$year == 2023, ]
+data_2024 <- data[data$year == 2024, ]
+
+
+
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
 # Create data frame for estimates for prevalence of HEARTS indicators
+# Group by month and calculate counts for each HTN control categories
+htn_control_counts <- data_2023 %>%
+  filter(!is.na(HTN_control) & !is.na(month)) %>%
+  group_by(month, HTN_control) %>%
+  summarize(count = n())
+
+# Calculate total count for each month
+total_counts <- htn_control_counts %>%
+  group_by(month) %>%
+  summarize(total = sum(count))
+
+# Join total counts with original data and calculate percentages
+htn_control_percentages <- left_join(htn_control_counts, total_counts, by = "month") %>%
+  mutate(percentage = round((count / total) * 100, 2))
+
+#-------------------------------------------------------------------------------
+
+# GRAPH Outputs
+
+# First plot of HTN Control 
+htn_control_percentages$month <- factor(htn_control_percentages$month, levels = c("Jan", "Feb", "Mar", "Apr", 
+                                                          "May", "Jun", "Jul", "Aug", 
+                                                          "Sep", "Oct", "Nov", "Dec"))
+
+# Graph 1 - Hypertension Control Rates
+ggplot(htn_control_percentages, aes(x = month, y = percentage, fill = HTN_control)) +
+  geom_bar(stat = "summary", fun = "mean", position = "dodge") +
+  labs(title = "Control Hypertension Rates", x = "Month", y = "Percentage (%)") +
+  guides(fill=guide_legend(title=" Hypertension Control")) +
+  scale_y_continuous(breaks=seq(0, 60, by = 5), limits = c(0, 55)) +
+  scale_fill_manual(values = c("#2ca25f","#e34a33")) +
+  theme_classic()
+
+
 
