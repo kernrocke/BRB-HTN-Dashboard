@@ -258,7 +258,8 @@ ggplot(htn_control_poly_per, aes(x = last_visited_polyclinic, y = percentage, fi
 
 # Graph 3 - Patient counts
 ggplot(patient_counts, aes(x = month, y = count)) +
-  geom_bar(stat = "summary", fun = "mean", position = "dodge", fill = "#3182bd" ) +
+  geom_bar(stat = "identity", position = "dodge", fill = "#3182bd" ) +
+  geom_text(aes(label=count), vjust=-0.3, size=3.5) +
   labs(title = "Patient Coverage by Month", x = "Month", y = "Number of Patients") +
   scale_y_continuous(breaks=seq(0, 7000, by = 1000), limits = c(0, 7000)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))  +
