@@ -204,6 +204,15 @@ total_poly <- htn_control_poly %>%
 htn_control_poly_per <- left_join(htn_control_poly, total_poly, by = "last_visited_polyclinic") %>%
   mutate(percentage = round((count / total) * 100, 2))
 
+
+# Create data frame for estimates for patient counts
+# Group by month and calculate counts 
+patient_counts <- data_2023 %>%
+  filter(!is.na(month)) %>%
+  group_by(month) %>%
+  summarize(count = n())
+
+
 #-------------------------------------------------------------------------------
 
 # GRAPH Outputs
@@ -213,11 +222,14 @@ htn_control_percentages$month <- factor(htn_control_percentages$month, levels = 
                                                                                   "May", "Jun", "Jul", "Aug", 
                                                                                   "Sep", "Oct", "Nov", "Dec"))
 
-# First plot of HTN Control 
+# Second plot of HTN Control 
 htn_control_poly_pers$last_visited_polyclinic <- factor(htn_control_poly_pers$last_visited_polyclinic, levels = c("Bradford Taitt", "David Thompshon", "Edgar Cochrane", "Eunice Gibson", 
                                                                                                                   "Fredrick Miler", "General Practice", "Horse Hill", "Maurice Byer", 
                                                                                                                   "Randall Phillips", "St.Andrew Outpatient", "St.Phillip", "Winston Scott"))
-
+# Third plot of HTN Control 
+patient_counts$month <- factor(patient_counts$month, levels = c("Jan", "Feb", "Mar", "Apr", 
+                                                                "May", "Jun", "Jul", "Aug", 
+                                                                "Sep", "Oct", "Nov", "Dec"))
 
 # Graph 1 - Hypertension Control Rates by Month
 ggplot(htn_control_percentages, aes(x = month, y = percentage, fill = HTN_control)) +
@@ -243,4 +255,15 @@ ggplot(htn_control_poly_per, aes(x = last_visited_polyclinic, y = percentage, fi
   theme(panel.background = element_rect(fill = "white", colour = "white")) +
   theme(axis.line.x = element_line(colour = "black")) +
   theme(axis.line.y = element_line(colour = "black"))
+
+# Graph 3 - Patient counts
+ggplot(patient_counts, aes(x = month, y = count)) +
+  geom_bar(stat = "summary", fun = "mean", position = "dodge", fill = "#3182bd" ) +
+  labs(title = "Patient Coverage by Month", x = "Month", y = "Number of Patients") +
+  scale_y_continuous(breaks=seq(0, 7000, by = 1000), limits = c(0, 7000)) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))  +
+  theme(panel.background = element_rect(fill = "white", colour = "white")) +
+  theme(axis.line.x = element_line(colour = "black")) +
+  theme(axis.line.y = element_line(colour = "black"))
+
   
