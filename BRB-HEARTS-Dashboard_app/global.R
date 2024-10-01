@@ -5,7 +5,7 @@
 # project:              Barbados HEARTS Dashboard
 # analyst:              Kern ROCKE
 # date create:          24 Sept 24
-# date modified:        29 Sept 24
+# date modified:        30 Sept 24
 # task:                 Create outputs for HEARTS Dashboard
 
 # Set working directory
@@ -168,6 +168,8 @@ data_2024 <- data[data$year == 2024, ]
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
+# Graph Preparations
+
 # Create data frame for estimates for prevalence of HEARTS indicators
 # Group by month and calculate counts for each HTN control categories
 htn_control_counts <- data_2023 %>%
@@ -186,21 +188,59 @@ htn_control_percentages <- left_join(htn_control_counts, total_counts, by = "mon
 
 #-------------------------------------------------------------------------------
 
+# Create data frame for estimates for prevalence of HEARTS indicators by 
+# Group by polyclinic and calculate counts for each HTN control categories
+htn_control_poly <- data_2023 %>%
+  filter(!is.na(HTN_control) & !is.na(month)) %>%
+  group_by(last_visited_polyclinic, HTN_control) %>%
+  summarize(count = n())
+
+# Calculate total count for each month
+total_poly <- htn_control_poly %>%
+  group_by(last_visited_polyclinic) %>%
+  summarize(total = sum(count))
+
+# Join total counts with original data and calculate percentages
+htn_control_poly_per <- left_join(htn_control_poly, total_poly, by = "last_visited_polyclinic") %>%
+  mutate(percentage = round((count / total) * 100, 2))
+
+#-------------------------------------------------------------------------------
+
 # GRAPH Outputs
 
 # First plot of HTN Control 
 htn_control_percentages$month <- factor(htn_control_percentages$month, levels = c("Jan", "Feb", "Mar", "Apr", 
-                                                          "May", "Jun", "Jul", "Aug", 
-                                                          "Sep", "Oct", "Nov", "Dec"))
+                                                                                  "May", "Jun", "Jul", "Aug", 
+                                                                                  "Sep", "Oct", "Nov", "Dec"))
 
-# Graph 1 - Hypertension Control Rates
+# First plot of HTN Control 
+htn_control_poly_pers$last_visited_polyclinic <- factor(htn_control_poly_pers$last_visited_polyclinic, levels = c("Bradford Taitt", "David Thompshon", "Edgar Cochrane", "Eunice Gibson", 
+                                                                                                                  "Fredrick Miler", "General Practice", "Horse Hill", "Maurice Byer", 
+                                                                                                                  "Randall Phillips", "St.Andrew Outpatient", "St.Phillip", "Winston Scott"))
+
+
+# Graph 1 - Hypertension Control Rates by Month
 ggplot(htn_control_percentages, aes(x = month, y = percentage, fill = HTN_control)) +
   geom_bar(stat = "summary", fun = "mean", position = "dodge") +
-  labs(title = "Control Hypertension Rates", x = "Month", y = "Percentage (%)") +
+  labs(title = "Hypertension Control Rates by Month", x = "Month", y = "Percentage (%)") +
   guides(fill=guide_legend(title=" Hypertension Control")) +
   scale_y_continuous(breaks=seq(0, 60, by = 5), limits = c(0, 55)) +
   scale_fill_manual(values = c("#2ca25f","#e34a33")) +
-  theme_classic()
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))  +
+  theme(panel.background = element_rect(fill = "white", colour = "white")) +
+  theme(axis.line.x = element_line(colour = "black")) +
+  theme(axis.line.y = element_line(colour = "black"))
 
 
-
+# Graph 2 - Hypertension Control Rates by Polyclinic
+ggplot(htn_control_poly_per, aes(x = last_visited_polyclinic, y = percentage, fill = HTN_control)) +
+  geom_bar(stat = "summary", fun = "mean", position = "dodge") +
+  labs(title = "Hypertension Control Rates by Polyclinics", x = "Polyclinic", y = "Percentage (%)") +
+  guides(fill=guide_legend(title=" Hypertension Control")) +
+  scale_y_continuous(breaks=seq(0, 65, by = 5), limits = c(0, 65)) +
+  scale_fill_manual(values = c("#2ca25f","#e34a33")) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))  +
+  theme(panel.background = element_rect(fill = "white", colour = "white")) +
+  theme(axis.line.x = element_line(colour = "black")) +
+  theme(axis.line.y = element_line(colour = "black"))
+  
