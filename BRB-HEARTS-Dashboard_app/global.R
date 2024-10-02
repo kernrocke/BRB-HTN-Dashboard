@@ -5,7 +5,7 @@
 # project:              Barbados HEARTS Dashboard
 # analyst:              Kern ROCKE
 # date create:          24 Sept 24
-# date modified:        30 Sept 24
+# date modified:        01 Oct 24
 # task:                 Create outputs for HEARTS Dashboard
 
 # Set working directory
@@ -268,3 +268,4 @@ ggplot(patient_counts, aes(x = month, y = count)) +
   theme(axis.line.y = element_line(colour = "black"))
 
   
+# Sex-specific analyses for HEARTS indicators.
