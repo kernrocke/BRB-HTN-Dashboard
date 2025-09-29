@@ -1,10 +1,10 @@
 ## HEADER -----------------------------------------------------
-  ##  R file METADATA
+##  R file METADATA
 ##  algorithm name          brb_htn_dashboard / app.R
 ##  project:                BNR
 ##  analysts:               Kern Rocke
 ##  date first created      11-AUG-2025
-## 	date last modified      23-AUG-2025
+## 	date last modified      29-SEP-2025
 ##  algorithm task          Create HTN Dashboard for Barbados HEARTS Programme
 ##  status                  Completed
 ##  objective               To have a dashboard for monitoring hypertensive patients
@@ -14,15 +14,25 @@
 # Set max upload size to 30 MB
 options(shiny.maxRequestSize = 30 * 1024^2)
 
-# Load required libraries
-library(shiny)
-library(shinydashboard)
-library(dplyr)
-library(ggplot2)
-library(plotly)
-library(DT)
-library(readr)
-library(lubridate)
+#-------------------------------------------------------------------------------
+######################
+### Libraries ###
+#####################
+# Note: Add any new libraries to the list of libaries in libs
+
+#List of libaries needed
+libs <- c("shiny", "shinydashboard", "dplyr", "ggplot2", "plotly", "DT", "readr",
+          "lubridate")
+
+#Install missing libraries
+installed_libs <- libs %in% rownames(installed.packages())
+if (any(installed_libs == F)) {
+  install.packages(libs[!installed_libs])
+}
+
+#Load libraries
+invisible(lapply(libs, library, character.only = T))
+#-------------------------------------------------------------------------------
 
 # Define UI using shinydashboard
 ui <- dashboardPage(
@@ -31,7 +41,7 @@ ui <- dashboardPage(
     title = div(
       img(src = "barbados_flag.png", height = "40px", style = "vertical-align: middle; margin-right: 10px;", alt = "Barbados Flag", `aria-label` = "Barbados Flag"),
       span("Barbados Hypertension Dashboard", style = "font-size: 24px; color: #000000; font-weight: bold;"),
-      img(src = "moh_logo.png", height = "40px", style = "vertical-align: middle; margin-left: 10px;", alt = "Ministry of Health Logo", `aria-label` = "Ministry of Health Logo"),
+      img(src = "moh_logo.png", height = "50px", style = "vertical-align: middle; margin-left: 10px;", alt = "Ministry of Health Logo", `aria-label` = "Ministry of Health Logo"),
       style = "display: flex; align-items: center;"
     ),
     titleWidth = "100%"
@@ -89,41 +99,51 @@ ui <- dashboardPage(
       tabItem(
         tabName = "home",
         div(
+          style = "text-align: center; margin: 20px;",
+          img(src = "brb_heart.png", style = "width: 300px; max-width: 80%; height: auto;", alt = "Barbados HEARTS Logo"),
+          h1(strong("Welcome to the Barbados Hypertension Dashboard"), style = "font-size: 32px; margin-top: 20px; margin-bottom: 30px;")
+        ),
+         div(
           style = "margin: 20px;",
-          h2("Overview"),
-          p("This dashboard is designed to provide a comprehensive and dynamic surveillance tool for monitoring hypertension within Barbados, leveraging routinely collected clinical data from polyclinics across the island. The primary objective is to offer public health officials, healthcare administrators, and clinicians a real-time view of hypertension prevalence and control, facilitating evidence-based decision-making and targeted interventions.",
+          h2(strong("Overview"), style = "font-size: 30px;"),
+          p(style = "font-size: 18px;", "This dashboard is designed to provide a comprehensive and dynamic surveillance tool for monitoring hypertension within Barbados, leveraging routinely collected clinical data from polyclinics across the island. The primary objective is to offer public health officials, healthcare administrators, and clinicians a real-time view of hypertension prevalence and control, facilitating evidence-based decision-making and targeted interventions.",
             "By consolidating data from primary care facilities, this tool provides a robust picture of the hypertension landscape. The dashboard focuses on several key metrics essential for effective disease management and public health surveillance. These include hypertension control, which measures the proportion of patients with blood pressure within target ranges, and uncontrolled hypertension, which identifies the population at greatest risk for cardiovascular complications.",
             "Furthermore, the dashboard disaggregates hypertension subtypes to provide a more nuanced understanding of the condition. It tracks the prevalence of isolated systolic hypertension and isolated diastolic hypertension. This detailed analysis allows for the identification of specific at-risk populations and supports the development of more precise clinical and public health strategies. Ultimately, this dashboard serves as a critical resource for continuously assessing the national response to hypertension and guiding strategic planning for chronic disease prevention and control in Barbados.")
         ),
         div(
           style = "margin: 20px;",
-          h2("Definitions"),
-          tags$ol(
-            tags$li("Hypertension: A systolic blood pressure of greater than or equal to 140 mmHg and diastolic blood pressure of greater than or equal to 90 mmHg"),
-            tags$li("Controlled Hypertension: Patients diagnosed with hypertension but has successfully lowered their blood pressure to a systolic and diastolic blood pressure of less than 140/90."),
-            tags$li("Uncontrolled Hypertension: Patients diagnosed with hypertension but has been unsuccessfully in lowering their blood pressure to a systolic blood pressure of less than 140 or diastolic blood pressure of less than 90."),
-            tags$li("Isolated Systolic Hypertension: Patients diagnosed with hypertension with a systolic blood pressure of greater than or equal to 140 and diastolic blood pressure of less than 90"),
-            tags$li("Isolated Diastolic Hypertension: Patients diagnosed with hypertension with a systolic blood pressure of less than 140 and diastolic blood pressure of greater than or equal to 90.")
+          h2(strong("Definitions"), style = "font-size: 30px;"),
+          tags$ol(style = "font-size: 18px;",
+                  tags$li(tags$strong("Hypertension:"), "A systolic blood pressure of greater than or equal to 140 mmHg and a diastolic blood pressure of greater than or equal to 90 mmHg."),
+                  tags$li(tags$strong("Controlled Hypertension:"), " Patients diagnosed with hypertension who have successfully lowered their blood pressure to a systolic and diastolic blood pressure of less than 140/90."),
+                  tags$li(tags$strong("Uncontrolled Hypertension:"), " Patients diagnosed with hypertension but have been unsuccessful in lowering their blood pressure to a systolic blood pressure of less than 140 or a diastolic blood pressure of less than 90."),
+                  tags$li(tags$strong("Isolated Systolic Hypertension:"), " Patients diagnosed with hypertension with a systolic blood pressure of greater than or equal to 140 and a diastolic blood pressure of less than 90."),
+                  tags$li(tags$strong("Isolated Diastolic Hypertension:"), " Patients diagnosed with hypertension with a systolic blood pressure of less than 140 and a diastolic blood pressure of greater than or equal to 90.")
           )
         ),
         div(
           style = "margin: 20px;",
-          fileInput("file", "Upload CSV File", accept = ".csv"),
-          p("Upload a CSV file in the same format as the provided data to view the analytics on the next page.")
+          tags$label("Upload CSV File", style = "font-size: 18px; font-weight: bold;", `for` = "file"),
+          fileInput("file", NULL, accept = ".csv"),
+          p(style = "font-size: 18px;", "Upload a CSV file in the same format as the provided data to view the dashboard overview and analytics pages.")
         )
       ),
       tabItem(
         tabName = "overview",
         div(
-          style = "margin: 20px;",
+          style = "margin: 20px;", 
           fluidRow(
-            column(6, selectInput("overview_year", "Select Year", choices = NULL))
-          ),
-          h3("Patients Seen at Polyclinics by Month"),
+            column(6, 
+                   div(
+                     style = "font-size: 24px;",
+                   selectInput("overview_year", "Select Year", choices = NULL))
+            )
+                   ),
+          h3(strong("Patients Seen at Polyclinics by Month")),
           plotlyOutput("patients_by_month_plot"),
-          h3("Hypertension Control by Month"),
+          h3(strong("Hypertension Control by Month")),
           plotlyOutput("control_by_month_plot"),
-          h3("Hypertension Control by Last Visited Polyclinic (All Years)"),
+          h3(strong("Hypertension Control by Last Visited Polyclinic (All Years)")),
           plotlyOutput("polyclinic_control_all_years_plot")
         )
       ),
@@ -132,13 +152,21 @@ ui <- dashboardPage(
         div(
           style = "margin: 20px;",
           fluidRow(
-            column(6, selectInput("month", "Select Month", choices = c("January" = "01", "February" = "02", "March" = "03", 
-                                                                       "April" = "04", "May" = "05", "June" = "06", 
-                                                                       "July" = "07", "August" = "08", "September" = "09", 
-                                                                       "October" = "10", "November" = "11", "December" = "12"))),
-            column(6, selectInput("year", "Select Year", choices = NULL))
+            column(6,
+                   div(style = "font-size: 24px;",
+                       selectInput("month", "Select Month", choices = c("January" = "01", "February" = "02", "March" = "03",
+                                                                        "April" = "04", "May" = "05", "June" = "06",
+                                                                        "July" = "07", "August" = "08", "September" = "09",
+                                                                        "October" = "10", "November" = "11", "December" = "12"))
+                   ) 
+            ),
+            column(6,
+                   div(style = "font-size: 24px;",
+                       selectInput("year", "Select Year", choices = NULL)
+                   ) 
+            )
           ),
-          h3("Hypertension Control Summary"),
+          h3(strong("Hypertension Control Summary")),
           fluidRow(
             valueBoxOutput("control_rate_box", width = 3),
             valueBoxOutput("uncontrolled_rate_box", width = 3),
@@ -146,23 +174,23 @@ ui <- dashboardPage(
             valueBoxOutput("isolated_diastolic_rate_box", width = 3),
             valueBoxOutput("visit_count_box", width = 3)
           ),
-          h3("Visits by Parish"),
+          h3(strong("Visits by Parish")),
           plotlyOutput("parish_plot"),
-          h3("Gender Distribution"),
+          h3(strong("Gender Distribution")),
           plotlyOutput("gender_plot"),
-          h3("Systolic Blood Pressure Metrics"),
+          h3(strong("Systolic Blood Pressure Metrics")),
           DTOutput("systolic_table"),
-          h3("Diastolic Blood Pressure Metrics"),
+          h3(strong("Diastolic Blood Pressure Metrics")),
           DTOutput("diastolic_table"),
-          h3("Hypertension Control by Parish"),
+          h3(strong("Hypertension Control by Parish")),
           plotlyOutput("control_parish_plot"),
-          h3("Hypertension Control by Last Visited Polyclinic"),
+          h3(strong("Hypertension Control by Last Visited Polyclinic")),
           plotlyOutput("polyclinic_control_plot"),
-          h3("Hypertension Metrics by Gender - Male"),
+          h3(strong("Hypertension Metrics by Gender - Male")),
           DTOutput("male_hypertension_table"),
-          h3("Hypertension Metrics by Gender - Female"),
+          h3(strong("Hypertension Metrics by Gender - Female")),
           DTOutput("female_hypertension_table"),
-          h3("Hypertension Control by Age Band"),
+          h3(strong("Hypertension Control by Age Band")),
           plotlyOutput("age_control_plot")
         )
       ),
@@ -170,29 +198,29 @@ ui <- dashboardPage(
         tabName = "additional",
         div(
           style = "margin: 20px;",
-          h2("Additional Information"),
-          h3("1.1 Disclaimers"),
-          h4("1.1.1 Data Overview and Visualizations"),
-          p("The Barbados Ministry of Health and Wellness (MOHW) HEARTS Programme seeks to integrate seamlessly and progressively into already existing health delivery services to promote the adoption of global best practices in the prevention and control of cardiovascular diseases (CVD) and improve the performance of the services through better control of high blood pressure and the promotion of secondary prevention with emphasis on the primary health care. Steps are taken to ensure accuracy and reliability, all data are subject to continuous verification, validation and amendments when needed. Estimates are subject to variations in reporting strategies between polyclinics."),
-          p("Data are compiled and shared with Ministry of Health and Wellness by authorities from the polyclinics via the Health Medical Record Information Tool, MedData. Data management and review is done by the Ministry of Health and Wellness and processing of the data is done by the Barbados National Registry (BNR)."),
-          p("MOHW and BNR makes no warranties or representations regarding the contents, appearance, completeness, technical specifications, or accuracy of the dashboard. MOHW and BNR disclaims all responsibility relating to, and shall not be liable for, any use of the report, the results of such use, or the reliance thereon."),
-          p("MOHW reserves the right to make updates and changes to the report without notice and accepts no liability for any errors or omissions in this regard."),
-          p("The user of the dashboard is responsible for the interpretation and use of the analysis and outputs performed by the dashboard. The submission of content to the dashboard does not imply MOHW’s approval or endorsement of that content, or that the content is appropriate for any purpose or meets any established standard or requirement."),
-          p("Any designations employed or presentation by the user in its use of the app, including tables and maps, do not imply the expression of any opinion whatsoever on the part of the Ministry of Health and Wellness nor the Barbados National Registry concerning the legal status of any of the polyclinics or hospitals under the jurisdiction of the MOHW."),
-          h4("1.1.2 Copyright, Permissions, and Referencing"),
-          p("© The Barbados Ministry of Health and Wellness 2025, All rights reserved."),
-          p("Permission from MOHW is required for the use of the Barbados Hypertension Dashboard."),
-          p("The user shall not, in connection with use of the app, state or imply that MOHW nor BNR endorses or is affiliated with the user, its use of the app, or any content, output, or analysis resulting from or related to the dashboard, or that MOHW nor BNR endorses any entity, organization, company, or product."),
-          p("The use of the MOHW or BNR emblem / logo by a user of the report in connection with its use is not permitted."),
-          p("Suggested citation: Barbados Hypertension Dashboard. Barbados: Ministry of Health and Wellness, 2025. Available online: https://bnr-cdrc.shinyapps.io/BRBHTNDashboard/ (last cited: [date])."),
-          h3("1.2 Acknowledgements"),
-          p("We gratefully acknowledge the input of national public health staff involved in surveillance activities and data submission to Barbados Ministry of Health and Wellness. In addition, we acknowledge the Barbados National Registry for its support in the development and maintenance of the dashboard. Furthermore, we would like to thank all external partners who contributed additional insights and contextual information on the data."),
-          h3("1.3 Feedback"),
-          p("For queries or comments on the contents of this dashboard, please contact: ",
+          h2(strong("Additional Information"), style = "font-size: 28px;"),
+          h3(strong("1.1 Disclaimers"), style = "font-size: 24px;"),
+          h4(strong("1.1.1 Data Overview and Visualizations"), style = "font-size: 20px;"),
+          p(style = "font-size: 18px;", "The Barbados Ministry of Health and Wellness (MOHW) HEARTS Programme seeks to integrate seamlessly and progressively into already existing health delivery services to promote the adoption of global best practices in the prevention and control of cardiovascular diseases (CVD) and improve the performance of the services through better control of high blood pressure and the promotion of secondary prevention with emphasis on the primary health care. Steps are taken to ensure accuracy and reliability, all data are subject to continuous verification, validation and amendments when needed. Estimates are subject to variations in reporting strategies between polyclinics."),
+          p(style = "font-size: 18px;", "Data are compiled and shared with Ministry of Health and Wellness by authorities from the polyclinics via the Health Medical Record Information Tool, MedData. Data management and review is done by the Ministry of Health and Wellness and processing of the data is done by the Barbados National Registry (BNR)."),
+          p(style = "font-size: 18px;", "MOHW and BNR makes no warranties or representations regarding the contents, appearance, completeness, technical specifications, or accuracy of the dashboard. MOHW and BNR disclaims all responsibility relating to, and shall not be liable for, any use of the report, the results of such use, or the reliance thereon."),
+          p(style = "font-size: 18px;", "MOHW reserves the right to make updates and changes to the report without notice and accepts no liability for any errors or omissions in this regard."),
+          p(style = "font-size: 18px;", "The user of the dashboard is responsible for the interpretation and use of the analysis and outputs performed by the dashboard. The submission of content to the dashboard does not imply MOHW’s approval or endorsement of that content, or that the content is appropriate for any purpose or meets any established standard or requirement."),
+          p(style = "font-size: 18px;", "Any designations employed or presentation by the user in its use of the app, including tables and maps, do not imply the expression of any opinion whatsoever on the part of the Ministry of Health and Wellness nor the Barbados National Registry concerning the legal status of any of the polyclinics or hospitals under the jurisdiction of the MOHW."),
+          h4(strong("1.1.2 Copyright, Permissions, and Referencing"), style = "font-size: 20px;"),
+          p(style = "font-size: 18px;", "© The Barbados Ministry of Health and Wellness 2025, All rights reserved."),
+          p(style = "font-size: 18px;", "Permission from MOHW is required for the use of the Barbados Hypertension Dashboard."),
+          p(style = "font-size: 18px;", "The user shall not, in connection with use of the app, state or imply that MOHW nor BNR endorses or is affiliated with the user, its use of the app, or any content, output, or analysis resulting from or related to the dashboard, or that MOHW nor BNR endorses any entity, organization, company, or product."),
+          p(style = "font-size: 18px;", "The use of the MOHW or BNR emblem / logo by a user of the report in connection with its use is not permitted."),
+          p(style = "font-size: 18px;", "Suggested citation: Barbados Hypertension Dashboard. Barbados: Ministry of Health and Wellness, 2025. Available online: https://bnr-cdrc.shinyapps.io/BRBHTNDashboard/ (last cited: [date])."),
+          h3(strong("1.2 Acknowledgements"), style = "font-size: 24px;"),
+          p(style = "font-size: 18px;", "We gratefully acknowledge the input of national public health staff involved in surveillance activities and data submission to Barbados Ministry of Health and Wellness. In addition, we acknowledge the Barbados National Registry for its support in the development and maintenance of the dashboard. Furthermore, we would like to thank all external partners who contributed additional insights and contextual information on the data."),
+          h3(strong("1.3 Feedback"), style = "font-size: 24px;"),
+          p(style = "font-size: 18px;", "For queries or comments on the contents of this dashboard, please contact: ",
             tags$a(href = "mailto:info@health.gov.bb", "info@health.gov.bb"), " or ",
             tags$a(href = "mailto:bnr@uwi.edu", "bnr@uwi.edu")),
-          h3("1.4 Collaborators"),
-          tags$ul(
+          h3(strong("1.4 Collaborators"), style = "font-size: 24px;"),
+          tags$ul(style = "font-size: 18px;",
             tags$li("Ministry of Health and Wellness, Barbados"),
             tags$li("Barbados National Registry"),
             tags$li("The George Alleyne Chronic Disease Research Centre"),
