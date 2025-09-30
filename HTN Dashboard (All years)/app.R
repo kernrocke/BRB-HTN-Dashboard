@@ -4,7 +4,7 @@
 ##  project:                BNR
 ##  analysts:               Kern Rocke
 ##  date first created      11-AUG-2025
-## 	date last modified      29-SEP-2025
+## 	date last modified      30-SEP-2025
 ##  algorithm task          Create HTN Dashboard for Barbados HEARTS Programme
 ##  status                  Completed
 ##  objective               To have a dashboard for monitoring hypertensive patients
@@ -25,13 +25,23 @@ libs <- c("shiny", "shinydashboard", "dplyr", "ggplot2", "plotly", "DT", "readr"
           "lubridate")
 
 #Install missing libraries
-installed_libs <- libs %in% rownames(installed.packages())
-if (any(installed_libs == F)) {
-  install.packages(libs[!installed_libs])
-}
+#installed_libs <- libs %in% rownames(installed.packages())
+#if (any(installed_libs == F)) {
+#  install.packages(libs[!installed_libs])
+#}
 
 #Load libraries
 invisible(lapply(libs, library, character.only = T))
+
+# Explicit calls for deployment detection
+library(shiny)
+library(shinydashboard)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(DT)
+library(readr)
+library(lubridate)
 #-------------------------------------------------------------------------------
 
 # Define UI using shinydashboard
@@ -76,6 +86,7 @@ ui <- dashboardPage(
         }
         .skin-blue .main-sidebar .sidebar-menu > li > a {
           color: #000000 !important;
+          font-size: 18px !important;
         }
         .skin-blue .main-sidebar .sidebar-menu > li.active > a {
           background-color: #F0F0F0 !important;
@@ -88,6 +99,7 @@ ui <- dashboardPage(
         }
         .skin-blue .main-sidebar .sidebar-menu > li > a > .fa {
           color: #000000 !important;
+          font-size: 18px !important;
         }
         /* Page content background */
         .skin-blue .content-wrapper {
@@ -201,11 +213,11 @@ ui <- dashboardPage(
           h2(strong("Additional Information"), style = "font-size: 28px;"),
           h3(strong("1.1 Disclaimers"), style = "font-size: 24px;"),
           h4(strong("1.1.1 Data Overview and Visualizations"), style = "font-size: 20px;"),
-          p(style = "font-size: 18px;", "The Barbados Ministry of Health and Wellness (MOHW) HEARTS Programme seeks to integrate seamlessly and progressively into already existing health delivery services to promote the adoption of global best practices in the prevention and control of cardiovascular diseases (CVD) and improve the performance of the services through better control of high blood pressure and the promotion of secondary prevention with emphasis on the primary health care. Steps are taken to ensure accuracy and reliability, all data are subject to continuous verification, validation and amendments when needed. Estimates are subject to variations in reporting strategies between polyclinics."),
-          p(style = "font-size: 18px;", "Data are compiled and shared with Ministry of Health and Wellness by authorities from the polyclinics via the Health Medical Record Information Tool, MedData. Data management and review is done by the Ministry of Health and Wellness and processing of the data is done by the Barbados National Registry (BNR)."),
-          p(style = "font-size: 18px;", "MOHW and BNR makes no warranties or representations regarding the contents, appearance, completeness, technical specifications, or accuracy of the dashboard. MOHW and BNR disclaims all responsibility relating to, and shall not be liable for, any use of the report, the results of such use, or the reliance thereon."),
+          p(style = "font-size: 18px;", "The Barbados Ministry of Health and Wellness (MOHW) HEARTS Programme seeks to integrate seamlessly and progressively into already existing health delivery services to promote the adoption of global best practices in the prevention and control of cardiovascular diseases (CVD) and improve the performance of the services through better control of high blood pressure and the promotion of secondary prevention with emphasis on the primary health care. Steps are taken to ensure accuracy and reliability; all data are subject to continuous verification, validation and amendments when needed. Estimates are subject to variations in reporting strategies between polyclinics."),
+          p(style = "font-size: 18px;", "Data are compiled and shared with Ministry of Health and Wellness by authorities from the polyclinics via the Health Medical Record Information Tool, MedData. Data management and review are conducted by the Ministry of Health and Wellness and processing of the data is done by the Barbados National Registry (BNR)."),
+          p(style = "font-size: 18px;", "MOHW and BNR make no warranties or representations regarding the contents, appearance, completeness, technical specifications, or accuracy of the dashboard. MOHW and BNR disclaim all responsibility relating to, and shall not be liable for, any use of the report, the results of such use, or the reliance thereon."),
           p(style = "font-size: 18px;", "MOHW reserves the right to make updates and changes to the report without notice and accepts no liability for any errors or omissions in this regard."),
-          p(style = "font-size: 18px;", "The user of the dashboard is responsible for the interpretation and use of the analysis and outputs performed by the dashboard. The submission of content to the dashboard does not imply MOHW’s approval or endorsement of that content, or that the content is appropriate for any purpose or meets any established standard or requirement."),
+          p(style = "font-size: 18px;", "The user of the dashboard is responsible for the interpretation and use of the analysis and outputs generated by the dashboard. The submission of content to the dashboard does not imply MOHW’s approval or endorsement of that content, or that the content is appropriate for any purpose or meets any established standard or requirement."),
           p(style = "font-size: 18px;", "Any designations employed or presentation by the user in its use of the app, including tables and maps, do not imply the expression of any opinion whatsoever on the part of the Ministry of Health and Wellness nor the Barbados National Registry concerning the legal status of any of the polyclinics or hospitals under the jurisdiction of the MOHW."),
           h4(strong("1.1.2 Copyright, Permissions, and Referencing"), style = "font-size: 20px;"),
           p(style = "font-size: 18px;", "© The Barbados Ministry of Health and Wellness 2025, All rights reserved."),
