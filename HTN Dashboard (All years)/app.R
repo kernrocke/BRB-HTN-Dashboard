@@ -4,7 +4,7 @@
 ##  project:                BNR
 ##  analysts:               Kern Rocke
 ##  date first created      11-AUG-2025
-## 	date last modified      30-SEP-2025
+## 	date last modified      13-NOV-2025
 ##  algorithm task          Create HTN Dashboard for Barbados HEARTS Programme
 ##  status                  Completed
 ##  objective               To have a dashboard for monitoring hypertensive patients
@@ -68,6 +68,12 @@ ui <- dashboardPage(
   dashboardBody(
     # Custom CSS for header, sidebar, and page content styling
     tags$head(
+      # PAGE TITLE - Add this
+      tags$script(HTML("document.title = 'Barbados Hypertension Dashboard';")),
+      # FAVICON - Add this section
+      tags$link(rel = "icon", type = "image/png", href = "brb_heart.png"),
+      tags$link(rel = "shortcut icon", type = "image/png", href = "brb_heart.png"),
+      tags$link(rel = "apple-touch-icon", type = "image/png", href = "brb_heart.png"),
       tags$style(HTML("
         /* Header styling */
         .skin-blue .main-header {
@@ -151,12 +157,21 @@ ui <- dashboardPage(
                    selectInput("overview_year", "Select Year", choices = NULL))
             )
                    ),
+          
+          fluidRow(
+            valueBoxOutput("overview_total_patients_box", width = 4),
+            valueBoxOutput("overview_control_rate_box", width = 4),
+            valueBoxOutput("overview_uncontrolled_rate_box", width = 4)
+          ),
+          
           h3(strong("Patients Seen at Polyclinics by Month")),
           plotlyOutput("patients_by_month_plot"),
           h3(strong("Hypertension Control by Month")),
           plotlyOutput("control_by_month_plot"),
+          h3(strong("Hypertension Control by Age")),
+          plotlyOutput("overview_age_control_plot"),
           h3(strong("Hypertension Control by Last Visited Polyclinic (All Years)")),
-          plotlyOutput("polyclinic_control_all_years_plot")
+          plotlyOutput("polyclinic_control_all_years_plot"),
         )
       ),
       tabItem(
@@ -322,6 +337,59 @@ server <- function(input, output, session) {
     filtered
   })
   
+  # Value box for total unique patients in overview
+  output$overview_total_patients_box <- renderValueBox({
+    req(overview_data())
+    df <- overview_data()
+    total_patients <- n_distinct(df$nrn)
+    valueBox(
+      format(total_patients, big.mark = ","),
+      "Total Unique Patients",
+      icon = icon("users"),
+      color = "blue"
+    )
+  })
+  
+  # Value box for hypertension control rate in overview
+  output$overview_control_rate_box <- renderValueBox({
+    req(overview_data())
+    df <- overview_data() %>%
+      filter(!is.na(most_recent_systoic), !is.na(most_recent_diasystoic)) %>%
+      distinct(nrn, .keep_all = TRUE)
+    
+    if (nrow(df) == 0) {
+      valueBox("No data", "Hypertension Control Rate", icon = icon("heartbeat"), color = "green")
+    } else {
+      control_rate <- mean(df$most_recent_systoic < 140 & df$most_recent_diasystoic < 90, na.rm = TRUE) * 100
+      valueBox(
+        paste0(round(control_rate, 1), "%"),
+        "Hypertension Control Rate",
+        icon = icon("heartbeat"),
+        color = "green"
+      )
+    }
+  })
+  
+  # Value box for uncontrolled hypertension rate in overview
+  output$overview_uncontrolled_rate_box <- renderValueBox({
+    req(overview_data())
+    df <- overview_data() %>%
+      filter(!is.na(most_recent_systoic), !is.na(most_recent_diasystoic)) %>%
+      distinct(nrn, .keep_all = TRUE)
+    
+    if (nrow(df) == 0) {
+      valueBox("No data", "Uncontrolled Hypertension", icon = icon("exclamation-triangle"), color = "red")
+    } else {
+      uncontrolled_rate <- mean(df$most_recent_systoic >= 140 | df$most_recent_diasystoic >= 90, na.rm = TRUE) * 100
+      valueBox(
+        paste0(round(uncontrolled_rate, 1), "%"),
+        "Uncontrolled Hypertension",
+        icon = icon("exclamation-triangle"),
+        color = "red"
+      )
+    }
+  })
+  
   # Line graph of patients seen by month
   output$patients_by_month_plot <- renderPlotly({
     req(overview_data())
@@ -386,6 +454,66 @@ server <- function(input, output, session) {
       theme_minimal() +
       labs(x = "Month", y = "Hypertension Control Percentage (%)") +
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    
+    ggplotly(p)
+  })
+  
+  # Bar chart of hypertension control percentage by age band for overview tab
+  output$overview_age_control_plot <- renderPlotly({
+    req(overview_data())
+    df <- overview_data()
+    
+    if (nrow(df) == 0) {
+      message("No rows in overview data for age control plot")
+      return(plot_ly() %>% layout(title = "No data available for selected year"))
+    }
+    
+    valid_df <- df %>%
+      filter(!is.na(most_recent_systoic), !is.na(most_recent_diasystoic), !is.na(birth_date)) %>%
+      mutate(
+        end_date = as.Date(paste0(input$overview_year, "-12-31")),
+        age = floor(interval(birth_date, end_date) / years(1))) %>%
+      filter(!is.na(age)) %>%
+      distinct(nrn, .keep_all = TRUE)
+    
+    message("Valid patients with BP and age for overview age control plot: ", nrow(valid_df))
+    
+    if (nrow(valid_df) == 0) {
+      return(plot_ly() %>% layout(title = "No valid data available for age calculation"))
+    }
+    
+    age_breaks <- c(0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, Inf)
+    age_labels <- c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", 
+                    "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", 
+                    "80-84", "85+")
+    
+    control_df <- valid_df %>%
+      mutate(age_band = cut(age, breaks = age_breaks, labels = age_labels, right = FALSE, include.lowest = TRUE)) %>%
+      group_by(age_band) %>%
+      summarize(
+        total_patients = n(),
+        controlled_patients = sum(most_recent_systoic < 140 & most_recent_diasystoic < 90, na.rm = TRUE),
+        control_rate = if_else(total_patients > 0, round((controlled_patients / total_patients) * 100, 1), 0),
+        .groups = "drop"
+      ) %>%
+      filter(!is.na(age_band)) %>%
+      arrange(age_band)
+    
+    if (nrow(control_df) > 0) {
+      message("Age bands in overview control plot: ", paste(control_df$age_band, collapse = ", "))
+    }
+    
+    if (nrow(control_df) == 0) {
+      message("No valid age bands for overview control plot")
+      return(plot_ly() %>% layout(title = "No valid data for age bands"))
+    }
+    
+    p <- ggplot(control_df, aes(x = age_band, y = control_rate)) +
+      geom_bar(stat = "identity", fill = "darkred") +
+      geom_text(aes(label = round(control_rate, 1), y = control_rate * 1.01), vjust = -0.5, size = 3) +
+      theme_minimal() +
+      labs(x = "Age Band", y = "Hypertension Control Percentage (%)") +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
     
     ggplotly(p)
   })
